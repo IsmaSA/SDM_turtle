@@ -1,1 +1,402 @@
 
+
+# Potential distribution, impacts, and invasion risk of two non-native snapping turtles, Chelydra serpentina and Macrochelys temminckii
+
+# Code by Ismael Soto,  supervised by: Cesar Capinha
+
+# Packages and directory ----
+suppressMessages({
+  library(dplyr, quiet = TRUE, warn.conflicts = FALSE)
+  library(reshape, quiet = TRUE, warn.conflicts = FALSE)
+  library(tidyr)  
+  library(stringr)
+  library(invacost)
+  library(raster)
+  require(httr)
+  require(rvest)
+  library(taxize)
+  library(xlsx)
+  library(sf)
+  library(rgbif)
+  library(sp)
+  library(countrycode)
+  library(readxl)
+  library(writexl)
+  library(rgdal)
+  library(devtools)
+  Sys.setenv(LANGUAGE = "en")
+})
+
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI")
+
+# GBIF occurrences (Chelydra serpentina)----
+
+n <- "Chelydra serpentina"
+sp <- occ_data(scientificName = n, hasCoordinate = TRUE, occurrenceStatus = "PRESENT",
+               limit = 5)
+sp <- sp[["data"]]
+key <- sp$acceptedTaxonKey[1]
+keys <- cbind(n,key)
+cat(n, "---> ", "key:", key)
+
+s<- 2441905
+dois <- tibble(Species = character(), DOI = character())
+
+x = occ_download(
+  pred_in("basisOfRecord", c("MACHINE_OBSERVATION", "HUMAN_OBSERVATION")),
+  pred_in("taxonKey", s),
+  pred_and(pred_gte("year", 1980), pred_lte("year", 2023)),
+  pred("hasCoordinate", TRUE),
+  pred_lte("coordinateUncertaintyInMeters", 9999), 
+  user = "ismaelsoto",
+  pwd = "Ismaputas123.",
+  email = "isma-sa@hotmail.com")
+
+z <- occ_download_meta(x)
+# DOI: 10.15468/dl.zbu54w
+
+
+# see downloaded data
+dat <- occ_download_get('0000198-240229165702484') %>%
+  occ_download_import()
+names(dat)
+
+
+# Clean de data:  ----
+data <- dat
+data$countryCode <- as.character(data$countryCode)
+data$countryCode <- countrycode(data$countryCode[!is.na(data$countryCode)], origin = 'iso2c', destination = 'iso3c')
+
+data <- data %>% dplyr::select(decimalLongitude, decimalLatitude, countryCode, species, year)
+data$decimalLatitude <- as.numeric(data$decimalLatitude)
+data$decimalLongitude <- as.numeric(data$decimalLongitude)
+
+
+flags<- CoordinateCleaner::clean_coordinates(x = data,
+                                             lon = "decimalLongitude",
+                                             lat = "decimalLatitude",
+                                             countries = "countryCode",
+                                             species = "species",
+                                             tests = c("capitals", "centroids", "equal","gbif",
+                                                       "zeros")) 
+dat_cl <- data[flags$.summary,]
+
+dat_cl<- dat_cl %>% as.data.frame() %>% filter(year > 1980) 
+nrow(dat_cl) #31462
+
+# Plot data
+world_map <- map_data("world")
+ggplot() +
+  geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "lightgray", color = "grey8") +
+  geom_point(data = dat_cl, aes(x = decimalLongitude, y = decimalLatitude), color = "red", size = 1.2) +
+  theme_bw() +
+  labs(x = "Longitude", y = "Latitude")
+
+
+# Place GBIF records in GRID ----
+bio <- raster::getData('worldclim', var='bio', res=5)
+
+grid_extent <- extent(-180, 180, -60, 90)  
+
+#Grid
+grid <- raster(grid_extent, res = 0.08333333)
+
+grid_count <- raster(grid)
+
+occ_points <- sp::SpatialPoints(data.frame(lon = dat_cl$decimalLongitude, 
+                                           lat = dat_cl$decimalLatitude))
+grid_count <- rasterize(occ_points, grid_count, fun = 'count')
+
+freq_table <- freq(grid_count, useNA='no') %>%
+  as.data.frame() %>%
+  filter(value > 0) 
+
+if (max(freq_table$value) > 1) {
+  cat("There is overalpping")
+}
+
+# Remove overlap
+
+valid_cells <- sum(!is.na(grid_count[]))
+
+ids <- rep(NA, ncell(grid_count))
+
+ids[!is.na(grid_count[])] <- 1:valid_cells
+
+grid_count[] <- ids
+
+raster_cells<- grid_count@data@values %>% as.data.frame()
+
+cell_ids <- extract(grid_count, occ_points)
+
+point_counts_per_cell <- as.data.frame(table(cell_ids))
+colnames(point_counts_per_cell) <- c("Cell_ID", "Count")
+
+points_df <- as.data.frame(occ_points)
+points_df$Cell_ID <- extract(grid_count, occ_points, cellnumbers=TRUE)[,1]
+
+names(points_df)
+names(point_counts_per_cell)
+
+points_df$Cell_ID <- as.character(points_df$Cell_ID)
+point_counts_per_cell$Cell_ID <- as.character(point_counts_per_cell$Cell_ID)
+
+points_with_cell_ids <- points_df %>%
+  left_join(point_counts_per_cell, by = "Cell_ID")
+
+#select just one point:
+unique_points_per_cell <- points_with_cell_ids %>%
+  group_by(Cell_ID) %>%
+  dplyr::slice(1) %>%
+  ungroup()
+
+if(valid_cells == nrow(unique_points_per_cell)) {
+  cat("one point per cell")
+} else {
+  cat("try again")
+}
+
+#see now
+ggplot() +
+  geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "lightgray", color = "grey8") +
+  geom_point(data = unique_points_per_cell, aes(x = lon, y = lat), color = "red", size = 1.2) +
+  theme_bw() +
+  labs(x = "Longitude", y = "Latitude")
+
+
+write_xlsx(unique_points_per_cell,paste0("Clean_no_overlap",n,".xlsx"))
+#dat_c<- read_xlsx("ParideX.xlsx")
+
+
+
+
+# Predictors from CHELSA -----
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Current")
+chelsa<- list.files(pattern = "CHELSA_")
+
+if(length(chelsa) ==19) { print("all layer loaded")}
+
+chelsa_st<- raster::stack(chelsa)
+plot(chelsa_st[[3]])
+
+factor <- round(0.08333333 / 0.008333333)
+chelsa_down <- resample(c, bio , method = 'bilinear')
+
+
+# water mask:
+water <- raster::getData('worldclim', var='bio', res=5)
+bio <- water[[3]]
+water_mask <- bio > 0  
+
+chelsa_masked <- mask(chelsa_down, water_mask)
+
+plot(chelsa_masked)
+
+
+# VIF
+ex <- raster::extract(chelsa_masked,dat_cl[,c(2,1)])
+head(ex)
+
+v <- vifstep(ex)
+
+# Background points -----
+
+GBIF <- "C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/gbif_reptiles_density_06-2022 (1).tif"
+GBIF <- raster(GBIF)
+
+GBIF <- resample(GBIF, chelsa, method = "bilinear")
+plot(GBIF)
+
+library(raster)
+library(spatstat)
+library(dismo)
+library(ks)
+points <- rasterToPoints(GBIF)
+
+coords <- cbind(points[,1], points[,2])
+
+scale <- length(points[,3]) / sum(points[,3])
+scaled_count  <- points[,3] * scale
+
+coords <- cbind(points[,1], points[,2])
+
+# Do a 2d kernel density estimation.
+target_density <- kde(coords, w=scaled_count)
+
+target_raster <- raster(target_density)
+
+# Clip data to the same resolution/extent.
+target_raster <- resample(target_raster, chelsa, method='bilinear')
+target_raster <- crop(target_raster, chelsa)
+target_raster <- target_raster - minValue(target_raster)
+target_raster <- (target_raster - minValue(target_raster)) / (maxValue(target_raster) - minValue(target_raster))
+
+target_raster_mask <- mask(target_raster, water_mask)
+
+#plot(target_raster)
+background_points <- randomPoints(mask =target_raster_mask, n = 100000, prob = TRUE)
+background_points<- background_points %>% as.data.frame()
+
+#write_xlsx(background_points,"bg_chelydra1.xlsx")
+writeRaster(target_raster_mask,"target_raster_mask.tif")
+
+
+
+
+# SDM -----
+bio
+dat_cl <- read_xlsx("Clean_no_overlapChelydra serpentina.xlsx")
+bg_data<- read_xlsx("bg_chelydra1.xlsx")
+chelsa <- stack("chelsa_down.tif")
+
+
+library(sdm)
+
+dat_cl<- dat_cl[,c(2,1)]
+dat_cl$species<- 1
+coordinates(dat_cl) <- c('lon','lat')
+colnames(bg_data)<- c('lat','lon')
+bg_data<- bg_data %>% as.data.frame()
+
+#VIF:
+ex <- raster::extract(chelsa,dat_cl)
+v <- vifstep(ex)
+#Variables      VIF
+#1  chelsa_down_5 8.501242
+#2  chelsa_down_7 4.266410
+#3 chelsa_down_10 4.990785
+#4 chelsa_down_11 7.689293
+#5 chelsa_down_12 2.554777
+#6 chelsa_down_15 4.376320
+#7 chelsa_down_17 4.425551
+#8 chelsa_down_18 2.816668
+#9 chelsa_down_19 5.739244
+chelsa <- exclude(chelsa, v)
+
+#sdm_data <- sdm::sdmData(species~.,dat_cl,
+#                         predictors= chelsa,
+#                        bg = list(bg_data))
+#sdm_data 
+
+sdm_data <- sdm::sdmData(species~.,dat_cl,
+                         predictors= chelsa,
+                         bg=list(n=10000,method='gRandom', bias=target_raster_mask))
+
+
+m <- sdm(species~., sdm_data, methods=c('glm','gam','rf'), 
+         replication='cv', cv.folds=5, n=100,
+         parallelSetting=list(ncore=10,method='parallel'))
+
+
+m
+
+en1 <- ensemble(m, newdata = chelsa_down, filename='en.img',
+                setting=list(method='weighted',stat='AUC',opt=2))
+
+
+# Future 2041-2070 -----
+
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2041_2070_ssp126")
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2041_2070_ssp370/")
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2041_2070_ssp585/")
+
+file_list <- list.files(pattern = "CHELSA_", full.names = TRUE)
+raster_layers <- list()
+
+# Loop through the file list, read each file as a RasterLayer, and add it to the list
+for (file_path in file_list) {
+  raster_layer <- raster(file_path)  # Read the file as a RasterLayer
+  raster_layers <- c(raster_layers, list(raster_layer))  # Add the RasterLayer to the list
+}
+
+chelsa_stack <- stack(raster_layers)
+chelsa_stack2 <- stack(raster_layers)
+chelsa_stack3 <- stack(raster_layers)
+
+chelsa_stack_final <- stack(chelsa_stack, chelsa_stack2, chelsa_stack3)
+
+chelsa_future1_down <- resample(chelsa_stack_final, bio , method = 'bilinear')
+selected_layers <- chelsa_future1_down[[c(15,17,2,3,4,7,9,10,11,
+                                          34,36,21,22,23,26,28,29,30,
+                                          53,55,40,41,42,45,47,48,49)]]
+
+writeRaster(selected_layers, "Chelsa_down_vif.tif")
+
+chelsa_future1_down <-raster("Chelsa_down_vif.tif")
+
+future <- c ("126","370","585")
+
+# SDM:
+for (f in future) {
+  if(f =="126")  {
+    selected_layers1 <- selected_layers[[c(1:9)]]
+  } else if(f =="370"){
+    selected_layers1 <- selected_layers[[c(10:18)]]
+  } else if(f =="585"){
+    selected_layers1 <- selected_layers[[c(19:27)]]
+  }
+  
+    sdm_data <- sdm::sdmData(species~.,dat_cl,
+              predictors= selected_layers1,
+             bg=list(n=10000,method='gRandom', bias=target_raster_mask))
+    cat ("Data for SDM properly formated for scenario:", f)
+    
+    m1 <- sdm(species~., sdm_data, methods=c('glm','gam','rf'), 
+             replication='cv', cv.folds=5, n=100,
+             parallelSetting=list(ncore=10,method='parallel'))
+    
+    cat("Model sdm() finished for scenario:", f)
+    write.sdm(m1,paste0("2041_Scenario",f,".sdm"))
+    
+    en1 <- ensemble(m1, newdata = selected_layers1, filename='en.img',
+                    setting=list(method='weighted',stat='AUC',opt=2))
+    writeRaster(en1,filename = paste0("Ens_Scenario_",f,".tif"))
+    
+    cat("Scenario finished-->",f,"\n")
+}
+
+
+# Binary maps ----
+
+lst <- list.files(pattern = "Ens_")
+r <- rast(lst)
+plot(r)
+
+
+for (f in future) {
+  en <- raster(paste0("Ens_Scenario_",f,".tif"))
+  m <- read.sdm(paste0("2041_Scenario",f,".sdm"))
+  th <- evaluates(m@data,en)@threshold_based$threshold[2]
+  pa <- en
+  pa[] <- ifelse(en[] >= th, 1,0)
+  writeRaster(rast(pa),paste0("PA_2041",f,".tif"))
+  cat("Binary map-->", f)
+}
+
+
+
+# Future 2071-2100 -----
+
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2100_ssp126/")
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2100_ssp370/")
+setwd("C:/Users/Propietario/Desktop/Escritorio/Paride_turtles/Review_BI/layer_2100_ssp585/")
+
+file_list <- list.files(pattern = "CHELSA_", full.names = TRUE)
+raster_layers <- list()
+
+# Loop through the file list, read each file as a RasterLayer, and add it to the list
+for (file_path in file_list) {
+  raster_layer <- raster(file_path)  
+  raster_layers <- c(raster_layers, list(raster_layer))  
+}
+
+chelsa_stack <- stack(raster_layers)
+chelsa_stack <- chelsa_stack[[c(15,17,2,3,4,7,9,10,11)]]
+chelsa_stack2 <- stack(raster_layers)
+chelsa_stack2 <- chelsa_stack2[[c(15,17,2,3,4,7,9,10,11)]]
+chelsa_stack3 <- stack(raster_layers)
+chelsa_stack3 <- chelsa_stack3[[c(15,17,2,3,4,7,9,10,11)]]
+
+chelsa_stack_final <- stack(chelsa_stack, chelsa_stack2, chelsa_stack3)
+
+selected_layers <- resample(chelsa_stack_final, bio , method = 'bilinear')
