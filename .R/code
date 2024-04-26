@@ -2,7 +2,7 @@
 
 # Potential distribution, impacts, and invasion risk of two non-native snapping turtles, Chelydra serpentina and Macrochelys temminckii
 
-# Code by Ismael Soto,  supervised by: Cesar Capinha
+# Code by Ismael Soto
 
 # Packages and directory ----
 suppressMessages({
