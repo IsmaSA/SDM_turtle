@@ -48,8 +48,8 @@ x = occ_download(
   pred_and(pred_gte("year", 1980), pred_lte("year", 2023)),
   pred("hasCoordinate", TRUE),
   pred_lte("coordinateUncertaintyInMeters", 9999), 
-  user = "ismaelsoto",
-  pwd = "Ismaputas123.",
+  user = "*****",
+  pwd = "*******",
   email = "isma-sa@hotmail.com")
 
 z <- occ_download_meta(x)
