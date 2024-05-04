@@ -8,13 +8,13 @@ Among reptiles, turtles are the most frequently traded and introduced species, a
 
 - **Iacopo Nerozzi** - CEE-M, University of Montpellier, CNRS, INRAE, Instit Agro, F34000, France. ORCID: 0000-0002-3997-828X
 - **Ismael Soto** - University of South Bohemia in České Budějovice, Faculty of Fisheries and Protection of Waters, South Bohemian Research Center of Aquaculture and Biodiversity of Hydrocenoses, Zátiší 728/II, 389 25 Vodňany, Czech Republic. ORCID: 0000-0002-7288-6336
-- **Giovanni Vimercati** - CEE-M, University of Montpellier, CNRS, INRAE, Instit Agro, F34000, France. ORCID: 0000-0002-3997-828X
-- **César Capinha** - School of Biological Sciences, Faculty of Science, Monash University, Clayton, 3800 Victoria, Australia; Institute for Biochemistry and Biology, University of Potsdam, 14469 Potsdam, Germany. ORCID:0000-0002-3952-9732
-- **Ali Serhan. Tarkan** - Department of Botany, Institute of Ecology and Earth Science, University of Tartu, J. Liivi 2, Tartu 50409, Estonia. ORCID: 0000-0002-9722-6692
-- **Fred Kraus** - Université Paris-Saclay, CNRS, AgroParisTech, Ecologie Systématique Evolution, Gif sur Yvette, France; Unité Biologie des Organismes et Ecosystèmes Aquatiques (BOREA, UMR 8067), Muséum national d'Histoire naturelle, Sorbonne Université, Université de Caen Normandie, CNRS, IRD, Université des Antilles, Paris, France. ORCID: 0000-0002-9382-6973
+- **Giovanni Vimercati** - 
+- **César Capinha** - 
+- **Ali Serhan. Tarkan** - 
+- **Fred Kraus** - 
 - **Phillip J. Haubrock** - University of South Bohemia in České Budějovice, Faculty of Fisheries and Protection of Waters, South Bohemian Research Center of Aquaculture and Biodiversity of Hydrocenoses, Zátiší 728/II, 389 25 Vodňany, Czech Republic; Department of River Ecology and Conservation, Senckenberg Research Institute and Natural History Museum Frankfurt, Gelnhausen, Germany; CAMB, Center for Applied Mathematics and Bioinformatics, Gulf University for Science and Technology, Kuwait. ORCID: 0000-0003-2154-4341
-- **Olivier S. G. Pauwels** - Université Paris-Saclay, CNRS, AgroParisTech, Ecologie Systématique Evolution, Gif sur Yvette, France. ORCID: 0000-0001-7605-4548
-- **Marco A. L. Zuffi** - Department of Biology, McGill University, Montréal, QC, Canada; Bieler School of Environment, McGill University, Montreal, QC, Canada. ORCID: 0000-0002-8323-9628
+- **Olivier S. G. Pauwels** - 
+- **Marco A. L. Zuffi** - 
 - **Paride Balzani**✝ - University of South Bohemia in České Budějovice, Faculty of Fisheries and Protection of Waters, South Bohemian Research Center of Aquaculture and Biodiversity of Hydrocenoses, Zátiší 728/II, 389 25 Vodňany, Czech Republic.
 
 
