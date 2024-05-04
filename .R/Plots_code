@@ -1,0 +1,453 @@
+
+# Plots for SDM turtles:
+
+### Ismael Soto
+
+
+
+# Current data ---- 
+setwd("C:/Users/Propietario/Desktop/Current")
+
+
+macro <- raster("Ens_Current_macro.tif")
+macro_sdm <- read.sdm("Current_macro.sdm")
+
+serpetina <- raster("Ens_Current_serpentina.tif")
+serpetina_sdm <- read.sdm("Current_serpentina.sdm")
+
+#bio <- raster::getData('worldclim', var='bio', res=5)
+#water_mask<- bio[[1]] >0
+
+macro <- mask(macro, water_mask)
+serpetina <- mask(serpetina, water_mask)
+
+cl <- colorRampPalette(c('#3E49BB','#3498DB','yellow','orange','red','darkred'))
+
+crs(macro) <- CRS("+init=epsg:4326")  
+robinson_proj <- "+proj=robin +datum=WGS84"
+macro_robin <- projectRaster(macro, crs = CRS(robinson_proj))
+serpentina_robin <- projectRaster(serpetina, crs = CRS(robinson_proj))
+
+
+layout(matrix(c(1, 2, 3), nrow=2, ncol=1, byrow=TRUE))
+par(mfrow=c(2, 1), mar=c(0, 0, 0, 0)) 
+plot(serpentina_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=F)
+plot(macro_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="")
+
+
+# 2041-2070 ---- 
+setwd("C:/Users/Propietario/Desktop/Future1/")
+
+files<- list.files(pattern = "Ens_")
+
+files <- c(
+  "Ens_Scenario_126.tif",      
+  "Ens_2041_Scenario_macro_126.tif", 
+  "Ens_Scenario_370.tif",       
+  "Ens_2041_Scenario_macro_370.tif", 
+  "Ens_Scenario_585.tif",        
+  "Ens_2041_Scenario_macro_585.tif" 
+)
+
+
+par(mfrow=c(3, 2), mar=c(1, 1, 2, 1)) 
+for (i in files) {
+  macro <- raster(i)
+  
+  macro_masked <- mask(macro, water_mask)
+  
+  macro_robin <- projectRaster(macro_masked, crs = CRS(robinson_proj))
+  
+  plot_title <- paste("Plot of", gsub(".tif", "", basename(i)))  
+  plot(macro_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+
+  
+# 2071-2100 ---- 
+setwd("C:/Users/Propietario/Desktop/Future2/")
+
+files2 <- list.files(pattern = "Ens_")
+
+
+
+for (i in files) {
+  macro <- raster(i)
+  
+  macro_masked <- mask(macro, water_mask)
+  
+  macro_robin <- projectRaster(macro_masked, crs = CRS(robinson_proj))
+  
+  plot_title <- paste("Plot of", gsub(".tif", "", basename(i))) 
+  plot(macro_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+
+
+
+## Figure 2: 
+# Chelydra
+directory1 <- "C:/Users/Propietario/Desktop/Future1"
+directory2 <- "C:/Users/Propietario/Desktop/Future2"
+check_name <- function(filenames, prefix) {
+  grepl(paste0("^", prefix), filenames)
+}
+
+files_chelydra <- c(files[4:6], files2[1:3] )
+par(mfrow=c(3, 2), mar=c(1, 1, 2, 1)) 
+
+for (i in 1:length(files_chelydra)) {
+  
+  files_chelydra2 <- files_chelydra[i]
+  
+   if (any(check_name(files_chelydra2, "Ens_Scenario"))) {
+    directory <- directory1
+  } else {
+    directory <- directory2
+  }
+  setwd(directory)
+  
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  macro_robin <- projectRaster(chely_masked, crs = CRS(robinson_proj))
+  
+  plot(macro_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+
+
+## Figure 3: 
+# Macro
+directory1 <- "C:/Users/Propietario/Desktop/Future1"
+directory2 <- "C:/Users/Propietario/Desktop/Future2"
+check_name <- function(filenames, prefix) {
+  grepl(paste0("^", prefix), filenames)
+}
+
+files_macro <- c(files[1:3], files2[4:6] )
+par(mfrow=c(3, 2), mar=c(1, 1, 2, 1)) 
+
+for (i in 1:length(files_macro)) {
+  
+  files_chelydra2 <- files_macro[i]
+  
+  if (any(check_name(files_chelydra2, "Ens_2041_Scenario_macro"))) {
+    directory <- directory1
+  } else {
+    directory <- directory2
+  }
+  setwd(directory)
+  
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  macro_robin <- projectRaster(chely_masked, crs = CRS(robinson_proj))
+  
+  plot(macro_robin, col=cl(200), axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+
+
+#  Binary maps to check the change % 
+
+#current
+
+serpetina <- raster("PA_current_serpetina.tif")
+serpetina <- mask(serpetina, water_mask)
+rasterized1 <- rasterize(usa_transformed, serpetina, field = "COUNTRYAFF_NUM")
+extracted_cells1 <- serpetina[rasterized1 == 1]
+num_cells_1.2 <- cellStats(serpetina, sum)
+current_area <- num_cells_1.2 * res(serpetina)[1] * res(serpetina)[2] 
+
+macro <- raster("PA_current_macro.tif")
+
+macro <- mask(macro, water_mask)
+rasterized1 <- rasterize(usa_transformed, macro, field = "COUNTRYAFF_NUM")
+extracted_cells1 <- macro[rasterized1 == 1]
+num_cells_1.1 <- cellStats(macro, sum)
+current_area <- num_cells_1.1 * res(macro)[1] * res(macro)[2]  
+
+
+
+
+Area <- function(raster_data) {
+  sum(raster_data[],na.rm=T) * res(raster_data)[1] * res(raster_data)[2]  
+}
+
+
+directory1 <- "C:/Users/Propietario/Desktop/Future1"
+directory2 <- "C:/Users/Propietario/Desktop/Future2"
+
+files1 <- list.files(pattern = "PA_")
+files2 <- list.files(pattern = "PA_")
+
+
+check_name <- function(filenames, prefix) {
+  grepl(paste0("^", prefix), filenames)
+}
+
+files_chelydra <- c(files1[4:6], files2[4:6] )
+files_macro <- c(files1[1:3], files2[4:6] )
+
+
+world <- st_read(dsn = "C:/Users/Propietario/Downloads/World_Countries_Generalized.shp")
+
+world <- world[,c(1,4,5)]
+
+world <- world %>% filter(COUNTRY %in% c("United States","Canada"))
+
+Per_area <- data.frame()
+for (i in 1:length(files_chelydra)) {
+  
+  files_chelydra2 <- files_chelydra[i]
+  
+  if (any(check_name(files_chelydra2, "PA_2041"))) {
+    directory <- directory1
+  } else {
+    directory <- directory2
+  }
+  setwd(directory)
+  
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  usa <- world %>% filter(COUNTRYAFF == "United States")
+  
+  usa$COUNTRYAFF <- as.factor(usa$COUNTRYAFF)
+  usa <- usa %>% mutate(COUNTRYAFF_NUM = as.numeric(as.factor(COUNTRYAFF)))
+  usa_sp <- as(usa, "Spatial")
+  usa_transformed <- spTransform(usa_sp, crs(chely_masked))  
+  rasterized <- rasterize(usa_transformed, chely_masked, field = "COUNTRYAFF_NUM")
+  extracted_cells <- chely_masked[rasterized == 1]
+    
+  num_cells_1 <- cellStats(chely_masked, sum)
+  
+  future <- num_cells_1 * res(chely_masked)[1] * res(chely_masked)[2]  
+  
+  percentage_change <- ((future - current_area) / current_area) * 100
+  
+  Per_area <- rbind(Per_area, data.frame("Sp" ="Macro",
+                                         "Current" =current_area,
+                                         "Future" = future,
+                                         "Scenario" = files_chelydra2,
+                                         "Percentage" = percentage_change))
+  }
+
+
+
+
+
+# water mask:
+water <- raster::getData('worldclim', var='bio', res=5)
+bio <- water[[3]]
+water_mask <- bio > 0  
+
+
+
+## Supplementary Material:
+
+# Figure S1 - all records
+map2 <- ne_countries(scale = "medium", returnclass = "sf")
+robinson_proj <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+map2 <- st_transform(map2, crs = robinson_proj)
+
+p1<- ggplot() +
+  geom_sf(data = map2, fill = "grey90", color = "black") +  
+  geom_point(data = chelydra, aes(x = lon, y = lat), color = "red", size = 0.5) +  
+  theme_bw() + 
+  labs(x = "Longitude", y = "Latitude")
+
+
+
+p2<- ggplot() +
+  geom_sf(data = map2, fill = "grey90", color = "black") +  
+  geom_point(data = macroch, aes(x = lon, y = lat), color = "red", size = 0.5) +  
+  theme_bw() + 
+  labs(x = "Longitude", y = "Latitude")
+
+p1+p2
+
+
+# Figure S2 - Records of Native range
+
+chelydra <- read_xlsx("Clean_no_overlapChelydra serpentina.xlsx")
+macroch <-  read_xlsx("Clean_no_overlapMacrochelys temminckii.xlsx") 
+
+map <- ne_countries(scale = "medium", returnclass = "sf") %>%
+  filter(continent == "North America") %>% filter(sovereignt %in% c(
+    "United States of America","Canada", "Mexico"))
+
+p1<- ggplot() +
+  geom_sf(data = map, fill = "grey90", color = "black") +  # Add North America map
+  geom_point(data = chelydra, aes(x = lon, y = lat), color = "red", size = 0.5) +  # Plot the points
+  theme_bw() + xlim(-135,-55) + ylim(20,60)+
+  labs(x = "Longitude", y = "Latitude")
+
+
+
+p2<- ggplot() +
+  geom_sf(data = map, fill = "grey90", color = "black") +  # Add North America map
+  geom_point(data = macroch, aes(x = lon, y = lat), color = "red", size = 0.5) +  # Plot the points
+  theme_bw() + xlim(-135,-55) + ylim(20,60)+
+  labs(x = "Longitude", y = "Latitude")
+
+
+p1 +p2
+
+# Figure S3 - All presence vs absence records
+
+# Current
+setwd("C:/Users/Propietario/Desktop/Current")
+
+directory1 <- "C:/Users/Propietario/Desktop/Future1"
+directory2 <- "C:/Users/Propietario/Desktop/Future2"
+check_name <- function(filenames, prefix) {
+  grepl(paste0("^", prefix), filenames)
+}
+
+files <- list.files(pattern = "PA_")
+files <- files[c(2,1)]
+par(mfrow=c(2, 1), mar=c(1, 1, 2, 1)) 
+cl <- c("royalblue3", "darkred")
+for (i in 1:length(files)) {
+  
+  files_chelydra2 <- files[i]
+
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  macro_robin <- projectRaster(chely_masked, crs = CRS(robinson_proj))
+  
+  plot(macro_robin, col=cl, axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+# Chelydra
+files_chelydra 
+par(mfrow=c(3, 2), mar=c(1, 1, 2, 1)) 
+
+for (i in 1:length(files_chelydra)) {
+  
+  files_chelydra2 <- files_chelydra[i]
+  
+  if (any(check_name(files_chelydra2, "PA_2041"))) {
+    directory <- directory1
+  } else {
+    directory <- directory2
+  }
+  setwd(directory)
+  
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  macro_robin <- projectRaster(chely_masked, crs = CRS(robinson_proj))
+  
+  plot(macro_robin, col=cl, axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+# Macro
+files_macro 
+par(mfrow=c(3, 2), mar=c(1, 1, 2, 1)) 
+for (i in 1:length(files_macro)) {
+  
+  files_chelydra2 <- files_macro[i]
+  
+  if (any(check_name(files_chelydra2, "PA_2041_"))) {
+    directory <- directory1
+  } else {
+    directory <- directory2
+  }
+  setwd(directory)
+  
+  chely <- raster(files_chelydra2)
+  
+  chely_masked <- mask(chely, water_mask)
+  
+  macro_robin <- projectRaster(chely_masked, crs = CRS(robinson_proj))
+  
+  plot(macro_robin, col=cl, axes=FALSE, box=FALSE, xlab="", ylab="", main="", legend=FALSE)
+}
+
+
+# Figure SX - MESS analysis record
+
+
+# Chelydra
+
+
+
+
+
+water <- raster::getData('worldclim', var='bio', res=5)
+bio <- water[[3]]
+water_mask <- bio > 0  
+
+MESS2 <- mask(MESS, water_mask)
+
+plot(MESS2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+list.files()
+
+
+## Check
+future <- c ("126","370","585")
+
+for (f in future) {
+  en <- raster(paste0("Ens_2071_Scenario_",f,".tif"))
+  m <- read.sdm(paste0("2071_Scenario",f,".sdm"))
+  th <- evaluates(m@data,en)@threshold_based$threshold[2]
+  pa <- en
+  pa[] <- ifelse(en[] >= th, 1,0)
+  writeRaster(rast(pa),paste0("PA_2071",f,".tif"))
+  cat("Binary map-->", f)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
