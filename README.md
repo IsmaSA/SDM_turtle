@@ -6,7 +6,7 @@ Among reptiles, turtles are the most frequently traded and introduced species, a
 
 ## Authors and Affiliations
 
-- **Iacopo Nerozzi** - 
+- **Iacopo Nerozzi** - Alma Mater University of Bologna, Bologna, Italy
 - **Ismael Soto** - University of South Bohemia in České Budějovice, Faculty of Fisheries and Protection of Waters, South Bohemian Research Center of Aquaculture and Biodiversity of Hydrocenoses, Zátiší 728/II, 389 25 Vodňany, Czech Republic. ORCID: 0000-0002-7288-6336
 - **Giovanni Vimercati** - 
 - **César Capinha** - 
