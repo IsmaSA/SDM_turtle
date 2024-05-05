@@ -382,20 +382,40 @@ for (i in 1:length(files_macro)) {
 
 # Figure SX - MESS analysis record
 
+setwd("C:/Users/Propietario/Desktop/Current")
 
-# Chelydra
+serpetina <- raster("Ens_Current_serpentina.tif")
+chely  <-read_xlsx("Clean_no_overlapChelydra serpentina.xlsx")
+chely <- chely[,c(1,2)]
+
+macro <- raster("Ens_Current_macro.tif")
+macro_pt <- read_xlsx("Clean_no_overlapMacrochelys temminckii.xlsx")
+macro_pt <- macro_pt[,c(1,2)]
+
+#bio <- raster::getData('worldclim', var='bio', res=5)
+#water_mask<- bio[[1]] >0
+macro <- mask(macro, water_mask)
+serpetina <- mask(serpetina, water_mask)
+
+
+refpt <- extract(serpetina, chely) # points 
+refpt1<- extract(macro, macro_pt) # points 
+
+ms <- mess(serpetina, refpt) #MESS
+ms1 <- mess(macro, refpt1) #MESS
+
+ms <- projectRaster(ms, crs = CRS(robinson_proj))
+ms1 <- projectRaster(ms1, crs = CRS(robinson_proj))
+
+palette <- colorRampPalette(brewer.pal(9, "YlOrRd"))
+colors <- palette(200)
+
+par(mfrow=c(1, 2), mar=c(0, 0, 0, 0)) 
+plot(ms, col=colors,axes=FALSE, box=FALSE, xlab="", ylab="", main="")
+plot(ms1, col=colors,axes=FALSE, box=FALSE, xlab="", ylab="", main="")
 
 
 
-
-
-water <- raster::getData('worldclim', var='bio', res=5)
-bio <- water[[3]]
-water_mask <- bio > 0  
-
-MESS2 <- mask(MESS, water_mask)
-
-plot(MESS2)
 
 
 
