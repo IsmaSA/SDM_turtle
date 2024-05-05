@@ -22,10 +22,10 @@ Among reptiles, turtles are the most frequently traded and introduced species, a
 <table>
   <tr>
     <td>
-      <img src="fig/fig1.jpeg" width="400">
+      <img src="plots/fig1.jpeg" width="400">
     </td>
     <td>
-      <img src="fig/fig2.jpeg" width="400">
+      <img src="plots/fig2.jpeg" width="400">
     </td>
   </tr>
 </table>
