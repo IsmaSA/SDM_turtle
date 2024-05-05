@@ -17,5 +17,16 @@ Among reptiles, turtles are the most frequently traded and introduced species, a
 - **Marco A. L. Zuffi** - 
 - **Paride Balzani**✝ - University of South Bohemia in České Budějovice, Faculty of Fisheries and Protection of Waters, South Bohemian Research Center of Aquaculture and Biodiversity of Hydrocenoses, Zátiší 728/II, 389 25 Vodňany, Czech Republic.
 
-
 ✝Corresponding author: [Paride Balzani](mailto:paride.balzani@unifi.it)
+
+<table>
+  <tr>
+    <td>
+      <img src="fig/fig1.jpeg" width="400">
+    </td>
+    <td>
+      <img src="fig/fig2.jpeg" width="400">
+    </td>
+  </tr>
+</table>
+
